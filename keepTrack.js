@@ -150,7 +150,14 @@
     let hasAny = false;
     for (const el of elements) {
       if (!el.hasAttribute('data-keeptrack-scroll-padding')) continue;
-      if (settings && settings.detectSticky && !el.hasAttribute('data-keeptrack-stuck')) continue;
+      if (settings && settings.detectSticky) {
+        const config = getElementConfig(el);
+        if (!config) continue;
+        if (config.isSticky === undefined) {
+          config.isSticky = window.getComputedStyle(el).position === 'sticky';
+        }
+        if (config.isSticky && !el.hasAttribute('data-keeptrack-stuck')) continue;
+      }
       hasAny = true;
       top += el.getBoundingClientRect().height;
     }
@@ -359,7 +366,10 @@
 
       // Predict scroll-padding-top on anchor link clicks
       anchorHandler = function (e) {
-        const anchor = e.target.closest('a[href^="#"]');
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const targetNode = e.target && e.target.nodeType === 1 ? e.target : e.target && e.target.parentElement;
+        if (!targetNode || !targetNode.closest) return;
+        const anchor = targetNode.closest('a[href^="#"]');
         if (!anchor) return;
         const targetId = anchor.getAttribute('href').slice(1);
         if (!targetId) return;
