@@ -43,8 +43,21 @@ The target for the CSS variable depends on the element's attributes:
 ### On the element itself (default)
 
 ```html
+<!-- Input -->
 <div data-keeptrack="height">...</div>
-<!-- Sets --height on this div -->
+
+<!-- Result -->
+<div data-keeptrack="height" style="--height: 64px">...</div>
+```
+
+Multiple properties:
+
+```html
+<!-- Input -->
+<div data-keeptrack="height, width, padding-top">...</div>
+
+<!-- Result -->
+<div data-keeptrack="height, width, padding-top" style="--height: 64px; --width: 320px; --padding-top: 16px">...</div>
 ```
 
 ### On the document root (via `id`)
@@ -52,8 +65,15 @@ The target for the CSS variable depends on the element's attributes:
 If the element has an `id`, the variable is set on `:root` with the id as a prefix:
 
 ```html
+<!-- Input -->
 <header id="site-header" data-keeptrack="height">...</header>
-<!-- Sets --site-header-height on :root -->
+
+<!-- Result: sets --site-header-height on :root -->
+<html style="--site-header-height: 80px">
+  ...
+  <header id="site-header" data-keeptrack="height">...</header>
+  ...
+</html>
 ```
 
 ```css
@@ -68,24 +88,60 @@ You can set the variable on a parent or any other element. The attribute accepts
 
 ```html
 <!-- Traverse 2 levels up -->
-<div data-keeptrack="height" data-keeptrack-target-parent="2">...</div>
+<!-- Input -->
+<div class="grandparent">
+  <div class="parent">
+    <div data-keeptrack="height" data-keeptrack-target-parent="2">...</div>
+  </div>
+</div>
 
+<!-- Result: --height is set on .grandparent -->
+<div class="grandparent" style="--height: 64px">
+  <div class="parent">
+    <div data-keeptrack="height" data-keeptrack-target-parent="2">...</div>
+  </div>
+</div>
+```
+
+```html
 <!-- Closest ancestor matching the selector -->
-<div data-keeptrack="height" data-keeptrack-target-parent=".wrapper">...</div>
+<!-- Input -->
+<div class="wrapper">
+  <div>
+    <div data-keeptrack="height" data-keeptrack-target-parent=".wrapper">...</div>
+  </div>
+</div>
+
+<!-- Result: --height is set on .wrapper -->
+<div class="wrapper" style="--height: 64px">
+  <div>
+    <div data-keeptrack="height" data-keeptrack-target-parent=".wrapper">...</div>
+  </div>
+</div>
 ```
 
 When using a selector, KeepTrack first tries `el.closest(selector)` to find the nearest ancestor. If no ancestor matches, it falls back to `document.querySelector(selector)`.
 
-If the element also has an `id`, the variable name includes it:
+If the element also has an `id`, the variable name includes the id:
 
 ```html
-<div id="sidebar" data-keeptrack="width" data-keeptrack-target-parent=".layout">...</div>
-<!-- Sets --sidebar-width on .layout -->
+<!-- Input -->
+<div class="layout">
+  <div id="sidebar" data-keeptrack="width" data-keeptrack-target-parent=".layout">...</div>
+</div>
+
+<!-- Result: --sidebar-width is set on .layout -->
+<div class="layout" style="--sidebar-width: 250px">
+  <div id="sidebar" data-keeptrack="width" data-keeptrack-target-parent=".layout">...</div>
+</div>
 ```
 
 ## Scrollbar dimensions
 
-By default, KeepTrack sets `--scrollbar-width` on `:root`, updated on viewport resize. You can also enable `--scrollbar-height`:
+By default, KeepTrack sets `--scrollbar-width` on `:root`, updated on viewport resize. You can also enable `--scrollbar-height`.
+
+- `--scrollbar-width` is the width (thickness) of the **vertical** scrollbar
+- `--scrollbar-height` is the height (thickness) of the **horizontal** scrollbar
 
 ```js
 new KeepTrack({
