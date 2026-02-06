@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeepTrack — Visual Test</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ==============================
+       1. Sticky header + scroll-padding
+       ============================== -->
+  <header id="site-header" data-keeptrack="height" data-keeptrack-scroll-padding style="position: sticky; top: 0;">
+    <div class="header-inner">
+      <strong>Sticky Header</strong>
+      <span class="stuck-indicator">Not stuck</span>
+      <span class="header-info">
+        --site-header-height: <code class="val-header-height">…</code> |
+        --site-header-stuck: <code class="val-header-stuck">…</code>
+      </span>
+    </div>
+  </header>
+
+  <!-- ==============================
+       Second sticky bar (sub-nav)
+       Unsticks when its container ends
+       ============================== -->
+  <div class="subnav-container">
+    <nav id="sub-nav" data-keeptrack="height" data-keeptrack-scroll-padding style="position: sticky; top: var(--site-header-height, 0);">
+      <div class="subnav-inner">
+        <span class="stuck-indicator subnav-stuck-indicator">Not stuck</span>
+        <a href="#section-basics">Basics</a>
+        <a href="#section-targets">Targets</a>
+        <a href="#section-features">Features</a>
+        <a href="#section-api">API</a>
+        <a href="#section-anchors">Anchors</a>
+        <span class="header-info">
+          --sub-nav-height: <code class="val-subnav-height">…</code> |
+          --sub-nav-stuck: <code class="val-subnav-stuck">…</code>
+        </span>
+      </div>
+    </nav>
+
+    <main>
+
+    <!-- ==============================
+         Basics
+         ============================== -->
+    <h2 id="section-basics" class="section-heading">Basics</h2>
+
+    <!-- ==============================
+         2. Basic tracking (no id)
+         ============================== -->
+    <section class="test-section">
+      <h2>Basic tracking (no id)</h2>
+      <p>Tracks <code>height</code> and <code>width</code> on the element itself.</p>
+      <div class="box resizable" data-keeptrack="height, width">
+        <span>Resize me</span>
+        <span class="box-info">
+          --height: <code class="val-basic-height">…</code><br>
+          --width: <code class="val-basic-width">…</code>
+        </span>
+      </div>
+    </section>
+
+    <!-- ==============================
+         3. Tracking with id (on :root)
+         ============================== -->
+    <section class="test-section">
+      <h2>Tracking with id (on :root)</h2>
+      <p>Sets <code>--tracked-box-height</code> on <code>:root</code>.</p>
+      <div id="tracked-box" class="box resizable" data-keeptrack="height">
+        <span>Resize me</span>
+        <span class="box-info">--tracked-box-height: <code class="val-id-height">…</code></span>
+      </div>
+      <div class="box consumer">
+        This box uses <code>var(--tracked-box-height)</code> as its min-height.
+      </div>
+    </section>
+
+    <!-- ==============================
+         Targets
+         ============================== -->
+    <h2 id="section-targets" class="section-heading">Targets</h2>
+
+    <!-- ==============================
+         4. Target parent (numeric)
+         ============================== -->
+    <section class="test-section">
+      <h2>Target parent (numeric: 2 levels up)</h2>
+      <p>Sets <code>--height</code> on the grandparent <code>.grandparent</code>.</p>
+      <div class="grandparent">
+        <span class="box-info">--height on grandparent: <code class="val-parent-num">…</code></span>
+        <div class="parent-box">
+          <div class="box resizable" data-keeptrack="height" data-keeptrack-target-parent="2">
+            <span>Resize me</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================
+         5. Target parent (CSS selector)
+         ============================== -->
+    <section class="test-section">
+      <h2>Target parent (selector: .wrapper)</h2>
+      <p>Uses <code>closest('.wrapper')</code> to find the target.</p>
+      <div class="wrapper">
+        <span class="box-info">--height on .wrapper: <code class="val-parent-sel">…</code></span>
+        <div>
+          <div class="box resizable" data-keeptrack="height" data-keeptrack-target-parent=".wrapper">
+            <span>Resize me</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================
+         6. Target parent with id (selector + id prefix)
+         ============================== -->
+    <section class="test-section">
+      <h2>Target parent + id prefix</h2>
+      <p>Sets <code>--my-sidebar-width</code> on <code>.layout</code>.</p>
+      <div class="layout">
+        <span class="box-info">--my-sidebar-width on .layout: <code class="val-target-id">…</code></span>
+        <div id="my-sidebar" class="box resizable" data-keeptrack="width" data-keeptrack-target-parent=".layout">
+          <span>Resize me</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==============================
+         Features
+         ============================== -->
+    <h2 id="section-features" class="section-heading">Features</h2>
+
+    <!-- ==============================
+         7. Multiple properties
+         ============================== -->
+    <section class="test-section">
+      <h2>Multiple properties</h2>
+      <p>Tracks <code>height, width, padding-top, border-radius</code>.</p>
+      <div class="box resizable multi" data-keeptrack="height, width, padding-top, border-radius">
+        <span>Resize me</span>
+        <span class="box-info">
+          --height: <code class="val-multi-h">…</code><br>
+          --width: <code class="val-multi-w">…</code><br>
+          --padding-top: <code class="val-multi-pt">…</code><br>
+          --border-radius: <code class="val-multi-br">…</code>
+        </span>
+      </div>
+    </section>
+
+    <!-- ==============================
+         8. Scrollbar dimensions
+         ============================== -->
+    <section class="test-section">
+      <h2>Scrollbar dimensions</h2>
+      <p>
+        --scrollbar-width: <code class="val-scrollbar-w">…</code><br>
+        --scrollbar-height: <code class="val-scrollbar-h">…</code>
+      </p>
+    </section>
+
+    <!-- ==============================
+         9. Poll mode (non-resize changes)
+         ============================== -->
+    <section class="test-section">
+      <h2>Poll mode (non-resize changes)</h2>
+      <p>Tracks <code>background-color</code> — hover the box to see it update.</p>
+      <div class="box poll-box" data-keeptrack="background-color">
+        <span>Hover me</span>
+        <span class="box-info">--background-color: <code class="val-poll-bg">…</code></span>
+      </div>
+    </section>
+
+    <!-- ==============================
+         API
+         ============================== -->
+    <h2 id="section-api" class="section-heading">API</h2>
+
+    <!-- ==============================
+         10. Observe / Unobserve API
+         ============================== -->
+    <section class="test-section">
+      <h2>Observe / Unobserve API</h2>
+      <p>This element starts untracked. Use the buttons to control tracking.</p>
+      <div class="box resizable" id="dynamic-box" data-keeptrack="height, width">
+        <span>Resize me</span>
+        <span class="box-info">
+          --dynamic-box-height: <code class="val-dyn-h">…</code><br>
+          --dynamic-box-width: <code class="val-dyn-w">…</code>
+        </span>
+      </div>
+      <div class="button-row">
+        <button id="btn-observe">Observe</button>
+        <button id="btn-unobserve">Unobserve</button>
+      </div>
+    </section>
+
+    <!-- ==============================
+         11. Dynamic data-keeptrack attribute
+         ============================== -->
+    <section class="test-section">
+      <h2>Dynamic attribute</h2>
+      <p>Add/remove <code>data-keeptrack</code> dynamically.</p>
+      <div class="box" id="attr-box">
+        <span>Not tracked yet</span>
+        <span class="box-info">--attr-box-height: <code class="val-attr-h">…</code></span>
+      </div>
+      <div class="button-row">
+        <button id="btn-add-attr">Add data-keeptrack="height"</button>
+        <button id="btn-remove-attr">Remove data-keeptrack</button>
+      </div>
+    </section>
+
+    <!-- ==============================
+         12. Destroy / Re-init
+         ============================== -->
+    <section class="test-section">
+      <h2>Destroy / Re-init</h2>
+      <div class="button-row">
+        <button id="btn-destroy">Destroy</button>
+        <button id="btn-reinit">Re-init</button>
+        <button id="btn-recalculate">Recalculate</button>
+      </div>
+    </section>
+
+    <!-- ==============================
+         13. onChange log
+         ============================== -->
+    <section class="test-section">
+      <h2>onChange log</h2>
+      <div id="log" class="log"></div>
+    </section>
+
+    <!-- ==============================
+         Anchor test
+         ============================== -->
+    <h2 id="section-anchors" class="section-heading">Anchor link tests</h2>
+
+    <section class="test-section">
+      <h2>Scroll-padding test</h2>
+      <p>Click these links to jump to sections below. Each heading should be visible below the sticky header(s), not hidden behind them.</p>
+      <nav class="anchor-nav">
+        <a href="#anchor-alpha">Alpha</a>
+        <a href="#anchor-beta">Beta</a>
+        <a href="#anchor-gamma">Gamma</a>
+        <a href="#anchor-delta">Delta</a>
+        <a href="#anchor-epsilon">Epsilon</a>
+      </nav>
+    </section>
+
+  <!-- Close subnav-container here so the sub-nav unsticks
+       once we scroll past this point -->
+  </div>
+
+  <div class="unstick-notice">
+    <p>The sub-nav should have unstuck above this point (its container ended). The header remains sticky. Scroll-padding now only accounts for the header height.</p>
+  </div>
+
+    <section class="test-section anchor-section">
+      <h2 id="anchor-alpha">Alpha</h2>
+      <p>This is the Alpha section. The heading should be visible below the sticky elements when navigated to via <a href="#anchor-alpha">#anchor-alpha</a>.</p>
+      <div class="anchor-filler"></div>
+    </section>
+
+    <section class="test-section anchor-section">
+      <h2 id="anchor-beta">Beta</h2>
+      <p>This is the Beta section. Try clicking <a href="#section-basics">back to Basics</a> to scroll up, then <a href="#anchor-beta">#anchor-beta</a> again.</p>
+      <div class="anchor-filler"></div>
+    </section>
+
+    <section class="test-section anchor-section">
+      <h2 id="anchor-gamma">Gamma</h2>
+      <p>This is the Gamma section. At this scroll depth, the sub-nav should have unstuck. Only the header's height contributes to scroll-padding.</p>
+      <div class="anchor-filler"></div>
+    </section>
+
+    <section class="test-section anchor-section">
+      <h2 id="anchor-delta">Delta</h2>
+      <p>This is the Delta section. Try <a href="#anchor-alpha">jumping back to Alpha</a> — the sub-nav should re-stick as you scroll up into its container.</p>
+      <div class="anchor-filler"></div>
+    </section>
+
+    <section class="test-section anchor-section">
+      <h2 id="anchor-epsilon">Epsilon</h2>
+      <p>This is the Epsilon section — the last anchor target. Try navigating to any section from the sub-nav: <a href="#section-basics">Basics</a>, <a href="#section-targets">Targets</a>, <a href="#section-features">Features</a>.</p>
+      <div class="anchor-filler"></div>
+    </section>
+
+    <!-- Spacer to enable scrolling past the last section -->
+    <div class="spacer"></div>
+
+  </main>
+
+  <script src="../keepTrack.js"></script>
+  <script>
+    // ==============================
+    // Initialize KeepTrack
+    // ==============================
+
+    const logEl = document.getElementById('log');
+    let maxLogEntries = 50;
+
+    function log(msg) {
+      const entry = document.createElement('div');
+      entry.textContent = msg;
+      logEl.prepend(entry);
+      while (logEl.children.length > maxLogEntries) {
+        logEl.removeChild(logEl.lastChild);
+      }
+    }
+
+    let tracker = new KeepTrack({
+      scrollbarWidth: true,
+      scrollbarHeight: true,
+      poll: true,
+      detectSticky: true,
+      debounceTime: 150,
+      onChange(el, prop, value) {
+        const id = el.id || el.className.split(' ')[0];
+        log(`${id} → ${prop}: ${value}`);
+      }
+    });
+
+    // ==============================
+    // Observe / Unobserve
+    // ==============================
+
+    const dynamicBox = document.getElementById('dynamic-box');
+    // Start untracked — remove from KeepTrack's auto-detected list
+    tracker.unobserve(dynamicBox);
+
+    document.getElementById('btn-observe').addEventListener('click', () => {
+      tracker.observe(dynamicBox);
+      log('Observed #dynamic-box');
+    });
+
+    document.getElementById('btn-unobserve').addEventListener('click', () => {
+      tracker.unobserve(dynamicBox);
+      log('Unobserved #dynamic-box');
+    });
+
+    // ==============================
+    // Dynamic attribute
+    // ==============================
+
+    const attrBox = document.getElementById('attr-box');
+
+    document.getElementById('btn-add-attr').addEventListener('click', () => {
+      attrBox.setAttribute('data-keeptrack', 'height');
+      log('Added data-keeptrack="height" to #attr-box');
+    });
+
+    document.getElementById('btn-remove-attr').addEventListener('click', () => {
+      attrBox.removeAttribute('data-keeptrack');
+      log('Removed data-keeptrack from #attr-box');
+    });
+
+    // ==============================
+    // Destroy / Re-init
+    // ==============================
+
+    document.getElementById('btn-destroy').addEventListener('click', () => {
+      tracker.destroy();
+      log('Destroyed KeepTrack');
+    });
+
+    document.getElementById('btn-reinit').addEventListener('click', () => {
+      tracker.init({
+        scrollbarWidth: true,
+        scrollbarHeight: true,
+        poll: true,
+        detectSticky: true,
+        debounceTime: 150,
+        onChange(el, prop, value) {
+          const id = el.id || el.className.split(' ')[0];
+          log(`${id} → ${prop}: ${value}`);
+        }
+      });
+      // Re-unobserve dynamic box so it starts untracked again
+      tracker.unobserve(dynamicBox);
+      log('Re-initialized KeepTrack');
+    });
+
+    document.getElementById('btn-recalculate').addEventListener('click', () => {
+      tracker.recalculate();
+      log('Recalculated');
+    });
+
+    // ==============================
+    // Value display updater
+    // ==============================
+
+    function updateDisplayValues() {
+      const root = document.documentElement;
+      const rs = getComputedStyle(root);
+
+      // Header
+      setText('.val-header-height', rs.getPropertyValue('--site-header-height'));
+      setText('.val-header-stuck', rs.getPropertyValue('--site-header-stuck'));
+
+      // Sub-nav
+      setText('.val-subnav-height', rs.getPropertyValue('--sub-nav-height'));
+      setText('.val-subnav-stuck', rs.getPropertyValue('--sub-nav-stuck'));
+
+      // Stuck indicators
+      const header = document.getElementById('site-header');
+      const stuckEl = header.querySelector('.stuck-indicator');
+      stuckEl.textContent = header.hasAttribute('data-keeptrack-stuck') ? 'Stuck!' : 'Not stuck';
+
+      const subNav = document.getElementById('sub-nav');
+      const subNavStuckEl = subNav.querySelector('.subnav-stuck-indicator');
+      subNavStuckEl.textContent = subNav.hasAttribute('data-keeptrack-stuck') ? 'Stuck!' : 'Not stuck';
+
+      // Basic (no id — read from element inline style)
+      const basicBox = document.querySelector('.box.resizable[data-keeptrack="height, width"]:not([id])');
+      if (basicBox) {
+        setText('.val-basic-height', basicBox.style.getPropertyValue('--height'));
+        setText('.val-basic-width', basicBox.style.getPropertyValue('--width'));
+      }
+
+      // ID-based
+      setText('.val-id-height', rs.getPropertyValue('--tracked-box-height'));
+
+      // Parent numeric
+      const gpEl = document.querySelector('.grandparent');
+      if (gpEl) setText('.val-parent-num', gpEl.style.getPropertyValue('--height'));
+
+      // Parent selector
+      const wrapperEl = document.querySelector('.wrapper');
+      if (wrapperEl) setText('.val-parent-sel', wrapperEl.style.getPropertyValue('--height'));
+
+      // Target + id
+      const layoutEl = document.querySelector('.layout');
+      if (layoutEl) setText('.val-target-id', layoutEl.style.getPropertyValue('--my-sidebar-width'));
+
+      // Multi
+      const multiBox = document.querySelector('.box.multi');
+      if (multiBox) {
+        setText('.val-multi-h', multiBox.style.getPropertyValue('--height'));
+        setText('.val-multi-w', multiBox.style.getPropertyValue('--width'));
+        setText('.val-multi-pt', multiBox.style.getPropertyValue('--padding-top'));
+        setText('.val-multi-br', multiBox.style.getPropertyValue('--border-radius'));
+      }
+
+      // Scrollbar
+      setText('.val-scrollbar-w', rs.getPropertyValue('--scrollbar-width'));
+      setText('.val-scrollbar-h', rs.getPropertyValue('--scrollbar-height'));
+
+      // Poll
+      const pollBox = document.querySelector('.poll-box');
+      if (pollBox) setText('.val-poll-bg', pollBox.style.getPropertyValue('--background-color'));
+
+      // Dynamic observe
+      setText('.val-dyn-h', rs.getPropertyValue('--dynamic-box-height'));
+      setText('.val-dyn-w', rs.getPropertyValue('--dynamic-box-width'));
+
+      // Dynamic attribute
+      setText('.val-attr-h', rs.getPropertyValue('--attr-box-height'));
+
+      requestAnimationFrame(updateDisplayValues);
+    }
+
+    function setText(selector, value) {
+      const el = document.querySelector(selector);
+      if (el) el.textContent = value || '(none)';
+    }
+
+    updateDisplayValues();
+  </script>
+
+</body>
+</html>
