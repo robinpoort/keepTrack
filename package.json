@@ -1,0 +1,29 @@
+{
+  "name": "keeptrack-css",
+  "version": "1.0.0",
+  "description": "Read computed CSS property values from elements and expose them as CSS custom properties (variables)",
+  "main": "keepTrack.js",
+  "files": [
+    "keepTrack.js"
+  ],
+  "keywords": [
+    "css",
+    "css-variables",
+    "custom-properties",
+    "computed-style",
+    "resize-observer",
+    "sticky",
+    "scroll-padding",
+    "scrollbar"
+  ],
+  "author": "Robin Poort",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robinpoort/keepTrack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/robinpoort/keepTrack/issues"
+  },
+  "homepage": "https://github.com/robinpoort/keepTrack#readme"
+}

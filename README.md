@@ -13,7 +13,7 @@ Include the script via a `<script>` tag, or import it as a CommonJS/AMD module:
 ```
 
 ```js
-const KeepTrack = require('keepTrack');
+const KeepTrack = require('keeptrack-css');
 ```
 
 ## Basic usage
@@ -182,6 +182,8 @@ If multiple elements have `data-keeptrack-scroll-padding`, their heights are sum
 <nav data-keeptrack="height" data-keeptrack-scroll-padding>...</nav>
 <!-- scroll-padding-top = header height + nav height -->
 ```
+
+When `detectSticky` is enabled, only elements that are currently stuck contribute to `scroll-padding-top`. When clicking an anchor link, KeepTrack predicts which sticky elements will be stuck at the target position and adjusts `scroll-padding-top` before the browser scrolls. This ensures correct scroll offsets even when a sticky element's container ends before the anchor target.
 
 ## Sticky detection
 
