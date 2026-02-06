@@ -15,6 +15,7 @@
     scrollbarHeight: false,
     debounceTime: 250,
     poll: false,
+    detectSticky: false,
     onChange: null
   };
 
@@ -22,6 +23,7 @@
   let configCache = new WeakMap();
   let lastScrollbarWidth;
   let lastScrollbarHeight;
+  let lastScrollPaddingTop;
 
   function debounce(fn, delay) {
     let timeout;
@@ -113,6 +115,83 @@
     }
   }
 
+  function calculateScrollPadding(elements) {
+    let top = 0;
+    let hasAny = false;
+    for (const el of elements) {
+      if (!el.hasAttribute('data-keeptrack-scroll-padding')) continue;
+      hasAny = true;
+      top += el.getBoundingClientRect().height;
+    }
+    if (!hasAny) return;
+    const value = `${top}px`;
+    if (value !== lastScrollPaddingTop) {
+      lastScrollPaddingTop = value;
+      document.documentElement.style.setProperty('scroll-padding-top', value);
+    }
+  }
+
+  function cleanupElement(el) {
+    if (configCache.has(el)) {
+      const { types, id, target } = configCache.get(el);
+      for (const prop of types) {
+        const name = id ? `--${id}-${prop}` : `--${prop}`;
+        if (target) {
+          target.style.removeProperty(name);
+        } else if (id) {
+          document.documentElement.style.removeProperty(name);
+        } else {
+          el.style.removeProperty(name);
+        }
+      }
+      if (id) {
+        document.documentElement.style.removeProperty(`--${id}-stuck`);
+      } else {
+        el.style.removeProperty('--stuck');
+      }
+    }
+    el.removeAttribute('data-keeptrack-stuck');
+    valueCache.delete(el);
+    configCache.delete(el);
+  }
+
+  function checkStickyElements(elements, settings) {
+    for (const el of elements) {
+      const config = getElementConfig(el);
+      if (config.isSticky === undefined) {
+        config.isSticky = window.getComputedStyle(el).position === 'sticky';
+      }
+      if (!config.isSticky) continue;
+
+      const rect = el.getBoundingClientRect();
+      const stickyTop = parseFloat(window.getComputedStyle(el).top);
+      if (isNaN(stickyTop)) continue;
+
+      const stuck = rect.top <= stickyTop + 1;
+      const wasStuck = el.hasAttribute('data-keeptrack-stuck');
+
+      if (stuck === wasStuck) continue;
+
+      if (stuck) {
+        el.setAttribute('data-keeptrack-stuck', '');
+      } else {
+        el.removeAttribute('data-keeptrack-stuck');
+      }
+
+      const id = el.id;
+      const stuckValue = stuck ? '1' : '0';
+      if (id) {
+        document.documentElement.style.setProperty(`--${id}-stuck`, stuckValue);
+      } else {
+        el.style.setProperty('--stuck', stuckValue);
+      }
+
+      if (settings.onChange) {
+        settings.onChange(el, 'stuck', stuck ? '1' : '0');
+      }
+    }
+  }
+
   return function (options) {
     const publicAPIs = {};
     let settings;
@@ -120,6 +199,8 @@
     let resizeObserver;
     let observer;
     let pollId;
+    let scrollHandler;
+    let scrollTicking = false;
     let trackedElements = [];
 
     function refreshElements() {
@@ -143,6 +224,7 @@
         for (const entry of entries) {
           calculateElement(entry.target, settings);
         }
+        calculateScrollPadding(trackedElements);
       });
 
       // DOM changes → observe new elements if relevant
@@ -150,15 +232,29 @@
         invalidateConfigCache();
         refreshElements();
         trackedElements.forEach((el) => calculateElement(el, settings));
+        calculateScrollPadding(trackedElements);
       }, settings.debounceTime);
 
       observer = new MutationObserver((mutations) => {
         let relevant = false;
         for (const mutation of mutations) {
-          // Attribute changes on tracked elements
-          if (mutation.type === 'attributes' && mutation.target.hasAttribute('data-keeptrack')) {
-            invalidateConfigCache();
-            calculateElement(mutation.target, settings);
+          if (mutation.type === 'attributes') {
+            const el = mutation.target;
+            if (mutation.attributeName === 'data-keeptrack') {
+              if (el.hasAttribute('data-keeptrack')) {
+                // data-keeptrack added or changed → full refresh to start tracking
+                relevant = true;
+              } else {
+                // data-keeptrack removed → clean up and refresh
+                cleanupElement(el);
+                relevant = true;
+              }
+            } else if (el.hasAttribute('data-keeptrack')) {
+              // Other tracked attribute changed (id, target-parent, etc.)
+              invalidateConfigCache();
+              calculateElement(el, settings);
+              calculateScrollPadding(trackedElements);
+            }
             continue;
           }
           // Added/removed tracked elements
@@ -187,13 +283,31 @@
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['data-keeptrack', 'data-keeptrack-target-parent', 'data-keeptrack-addparent', 'id']
+        attributeFilter: ['data-keeptrack', 'data-keeptrack-target-parent', 'data-keeptrack-addparent', 'data-keeptrack-scroll-padding', 'id']
       });
+
+      // Sticky detection on scroll
+      if (settings.detectSticky) {
+        scrollHandler = function () {
+          if (!scrollTicking) {
+            scrollTicking = true;
+            requestAnimationFrame(() => {
+              checkStickyElements(trackedElements, settings);
+              scrollTicking = false;
+            });
+          }
+        };
+        window.addEventListener('scroll', scrollHandler, { passive: true });
+      }
 
       // Poll for non-resize computed style changes
       if (settings.poll) {
         (function poll() {
           trackedElements.forEach((el) => calculateElement(el, settings));
+          calculateScrollPadding(trackedElements);
+          if (settings.detectSticky) {
+            checkStickyElements(trackedElements, settings);
+          }
           pollId = requestAnimationFrame(poll);
         })();
       }
@@ -202,6 +316,10 @@
       calculateScrollbars(settings);
       refreshElements();
       trackedElements.forEach((el) => calculateElement(el, settings));
+      calculateScrollPadding(trackedElements);
+      if (settings.detectSticky) {
+        checkStickyElements(trackedElements, settings);
+      }
     };
 
     publicAPIs.observe = function (el) {
@@ -209,26 +327,35 @@
       trackedElements.push(el);
       if (resizeObserver) resizeObserver.observe(el);
       calculateElement(el, settings);
+      calculateScrollPadding(trackedElements);
     };
 
     publicAPIs.unobserve = function (el) {
       const index = trackedElements.indexOf(el);
       if (index === -1) return;
+      cleanupElement(el);
       trackedElements.splice(index, 1);
       if (resizeObserver) resizeObserver.unobserve(el);
-      valueCache.delete(el);
-      configCache.delete(el);
+      calculateScrollPadding(trackedElements);
     };
 
     publicAPIs.recalculate = function () {
       calculateScrollbars(settings);
       trackedElements.forEach((el) => calculateElement(el, settings));
+      calculateScrollPadding(trackedElements);
+      if (settings.detectSticky) {
+        checkStickyElements(trackedElements, settings);
+      }
     };
 
     publicAPIs.destroy = function () {
       if (resizeHandler) {
         window.removeEventListener('resize', resizeHandler);
         resizeHandler = null;
+      }
+      if (scrollHandler) {
+        window.removeEventListener('scroll', scrollHandler);
+        scrollHandler = null;
       }
       if (resizeObserver) {
         resizeObserver.disconnect();
@@ -242,7 +369,25 @@
         cancelAnimationFrame(pollId);
         pollId = null;
       }
+
+      // Clean up CSS variables and attributes
+      trackedElements.forEach(cleanupElement);
+
+      if (lastScrollbarWidth) {
+        document.documentElement.style.removeProperty('--scrollbar-width');
+        lastScrollbarWidth = undefined;
+      }
+      if (lastScrollbarHeight) {
+        document.documentElement.style.removeProperty('--scrollbar-height');
+        lastScrollbarHeight = undefined;
+      }
+      if (lastScrollPaddingTop) {
+        document.documentElement.style.removeProperty('scroll-padding-top');
+        lastScrollPaddingTop = undefined;
+      }
+
       trackedElements = [];
+      scrollTicking = false;
     };
 
     publicAPIs.init(options);
